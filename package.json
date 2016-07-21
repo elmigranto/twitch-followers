@@ -1,8 +1,9 @@
 {
   "name": "twitch-followers",
+  "author": "Alexey Zabrodsky <elmigranto@gmail.com>",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Notifies you about Twitch followers",
+  "main": "notifier.js",
   "scripts": {
     "test": "mocha --timeout 10000 test.js"
   },
