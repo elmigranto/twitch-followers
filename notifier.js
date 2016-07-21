@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const events = require('events');
 const {followersSinceId} = require('./funcs');
@@ -66,25 +67,68 @@ if (!module.parent) {
     console.log(`${error ? `ERROR: ${error}\n` : ''}
 Usage:
 
-  node ${path.basename(__filename)} channel [sinceId]
+  node ${path.basename(__filename)} channel
 
     - channel  required  channel to monitor for new followers
-    - sinceId  optional  latest know folower id
     `);
   };
 
-  const channel = process.argv[3];
+  const desktopPath = (filename) => {
+    const home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+    return path.resolve(home, 'Desktop', filename);
+  };
+
+  const channel = process.argv[2];
 
   if (!channel)
     return usage('Missing argument `channel`.');
 
-  const notifier = new Notifier(process.argv[3]);
+  // Save/Load last id.
+  const db = {
+    default: -100,
+    path: desktopPath(`${channel}.last-follower.json`),
 
-  notifier.on(Notifier.FOLLOWER, follower => {
-    console.log('%s just followed!', follower.display_name);
+    load () {
+      try {
+        return require(this.path).lastId || this.default;
+      }
+      catch (e) {
+        return this.default;
+      }
+    },
+
+    save (lastId) {
+      const json = JSON.stringify({lastId}, null, 2);
+      fs.writeFileSync(this.path, json, 'utf8');
+    }
+  };
+
+  // Update `~/Desktop/followers-{channel}.txt`.
+  const thanks = {
+    queue: [],
+    intervalId: 0,
+    path: desktopPath(`${channel}.followers.txt`),
+
+    say () {
+      const username = thanks.queue.shift();
+      const message = username
+        ? `Thanks for the follow,\n${username} <3`
+        : '';
+
+      fs.writeFileSync(this.path, message, 'utf8');
+    }
+  };
+
+  const notifier = new Notifier(channel, {sinceId: db.load()});
+
+  notifier.on(Notifier.FOLLOWER, user => {
+    db.save(user._id);
+    thanks.queue.push(user.display_name);
+    console.log(`${user.display_name} just followed`);
   });
 
   notifier.start();
+  setInterval(thanks.say.bind(thanks), 10000);
 }
 
 module.exports = Notifier;
