@@ -1,13 +1,13 @@
 # twitch-notifications
 
-Notifies you about new followers, and dumps thanks to the file.
+Notifies you about new followers (and puts "thank you messages" for OBS to the file via command line utility).
 
 ### Javascript API
 
 **Install**
 
 ``` bash
-npm install --save github:elmigranto/twitch-followers
+npm install --save twitch-followers
 ```
 
 **In Node.js**
